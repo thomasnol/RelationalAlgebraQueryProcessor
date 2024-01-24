@@ -52,13 +52,13 @@ while 1:
     For example:
     Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
     Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
-    Assistants(ID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+    Assistants(jobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
     select age>30(employees)
     project ID, Name(employees)
     employees intersect students
     students union employees
     employees minus students
-    employees.ID inner join assistants.ID
+    employees.ID inner join assistants.JobID
     """).lower()
 
     # Performing the Query Operation
@@ -109,6 +109,7 @@ while 1:
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(relation.columns)
         for row in results:
             print(row)
 
@@ -141,6 +142,7 @@ while 1:
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(fields)
         for row in results:
             print(row)
 
@@ -166,6 +168,7 @@ while 1:
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(rel1.columns)
         for row in results:
             print(row)
 
@@ -193,6 +196,7 @@ while 1:
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(rel1.columns)
         for row in results:
             print(row)
 
@@ -218,12 +222,13 @@ while 1:
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(rel1.columns)
         for row in results:
             print(row)
 
     elif 'inner join' in query:
         # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
-        # Assistants(ID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+        # Assistants(JobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
         # employees.ID inner join assistants.ID
         # Parsing the Query
         query_parts = query.split('inner join')
@@ -233,18 +238,28 @@ while 1:
         # Convert the params to a relation
         rel1 = relations[r1.split('.')[0]] # employees
         rel2 = relations[r2.split('.')[0]] # assistants
-        merge_col1 = r1.split('.')[1]
-        merge_col2 = r2.split('.')[1]
+        merge_col1 = r1.split('.')[1] # 'ID'
+        merge_col2 = r2.split('.')[1] # 'jobID'
+
+        # Converting the field to the column number
+        col1 = rel1.columns.index(merge_col1)
+        col2 = rel2.columns.index(merge_col2)
 
         # Filtering the data based on the query
         results = []
         for row in rel1.data:
             # (1, 'John', 32), 2, 30
-            if row not in rel2.data:
-                results.append(row)
+            # find the matching row in rel2
+            for row2 in rel2.data:
+                if row[col1] == row2[col2]: # if matching key column value found
+                    # create new list with all columns from both relations
+                    newRow = [row + row2]
+                    results.append(newRow)
+                    break
 
         # Printing the result
         print(f"Result for query: {query}")
+        print(rel1.columns + rel2.columns)
         for row in results:
             print(row)
 
