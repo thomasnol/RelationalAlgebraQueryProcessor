@@ -35,16 +35,16 @@ class Relation:
         return f"Relation {self.name} with columns {self.columns} and data {self.data}"
 
 
-def select(relation, condition):
-    filtered_data = [row for row in relation.data if condition(row)]
-    return Relation(relation.columns, filtered_data)
-
-
-def project(relation, columns):
-    index_mapping = [relation.columns.index(col) for col in columns]
-    projected_data = [[row[i] for i in index_mapping] for row in relation.data]
-    projected_columns = columns
-    return Relation(projected_columns, projected_data)
+# def select(relation, condition):
+#     filtered_data = [row for row in relation.data if condition(row)]
+#     return Relation(relation.columns, filtered_data)
+#
+#
+# def project(relation, columns):
+#     index_mapping = [relation.columns.index(col) for col in columns]
+#     projected_data = [[row[i] for i in index_mapping] for row in relation.data]
+#     projected_columns = columns
+#     return Relation(projected_columns, projected_data)
 
 while 1:
     # Example Relational Algebra Query
@@ -55,6 +55,8 @@ while 1:
     select age>30(employees)
     project ID, Name(employees)
     employees intersect students
+    students union employees
+    employees minus students 
     """).lower()
 
     # Performing the Query Operation
@@ -158,6 +160,58 @@ while 1:
         for row in rel1.data:
             # (1, 'John', 32), 2, 30
             if (row in rel2.data):
+                results.append(row)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        for row in results:
+            print(row)
+
+    elif 'union' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+        # students union employees
+        # Parsing the Query
+        query_parts = query.split('union')
+        r1 = query_parts[0].strip() # 'students'
+        r2 = query_parts[1].strip() # 'employees'
+
+        # Convert the params to a relation
+        rel1 = relations[r1]
+        rel2 = relations[r2]
+
+        # Filtering the employees_data based on the query
+        results = []
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            results.append(row)
+        for row in rel2.data:
+            if row not in rel1.data:
+                results.append(row)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        for row in results:
+            print(row)
+
+    elif 'minus' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+        # employees minus students
+        # Parsing the Query
+        query_parts = query.split('minus')
+        r1 = query_parts[0].strip() # 'employees'
+        r2 = query_parts[1].strip() # 'students'
+
+        # Convert the params to a relation
+        rel1 = relations[r1]
+        rel2 = relations[r2]
+
+        # Filtering the employees_data based on the query
+        results = []
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            if row not in rel2.data:
                 results.append(row)
 
         # Printing the result
