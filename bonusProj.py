@@ -126,7 +126,12 @@ while 1:
         # Filtering the employees_data based on the query
         results = []
         for row in relation.data: # row = (1, 'John', 32)
-            results.append([(item[0], item[1]) for item in row])
+            # for col in columns:
+            newRow = []
+            for col in columns:
+                newRow.append(row[col])
+            results.append(newRow)
+            # results.append([tuple(item[i] for i in columns)])
             # condition_check(row, column, condition, condition_value)  # (1, 'John', 32), 2, 30
 
         # Printing the result
