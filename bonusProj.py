@@ -52,11 +52,13 @@ while 1:
     For example:
     Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
     Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+    Assistants(ID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
     select age>30(employees)
     project ID, Name(employees)
     employees intersect students
     students union employees
-    employees minus students 
+    employees minus students
+    employees.ID inner join assistants.ID
     """).lower()
 
     # Performing the Query Operation
@@ -100,7 +102,7 @@ while 1:
         # Converting the field to the column number
         column = relation.columns.index(field)
 
-        # Filtering the employees_data based on the query
+        # Filtering the data based on the query
         results = []
         for row in relation.data:
             condition_check(row, column, condition, condition_value) # (1, 'John', 32), 2, 30
@@ -126,7 +128,7 @@ while 1:
         # Converting the fields to the column numbers
         columns = [relation.columns.index(field) for field in fields]
 
-        # Filtering the employees_data based on the query
+        # Filtering the data based on the query
         results = []
         for row in relation.data: # row = (1, 'John', 32)
             # for col in columns:
@@ -155,7 +157,7 @@ while 1:
         rel1 = relations[r1]
         rel2 = relations[r2]
 
-        # Filtering the employees_data based on the query
+        # Filtering the data based on the query
         results = []
         for row in rel1.data:
             # (1, 'John', 32), 2, 30
@@ -180,7 +182,7 @@ while 1:
         rel1 = relations[r1]
         rel2 = relations[r2]
 
-        # Filtering the employees_data based on the query
+        # Filtering the data based on the query
         results = []
         for row in rel1.data:
             # (1, 'John', 32), 2, 30
@@ -207,7 +209,34 @@ while 1:
         rel1 = relations[r1]
         rel2 = relations[r2]
 
-        # Filtering the employees_data based on the query
+        # Filtering the data based on the query
+        results = []
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            if row not in rel2.data:
+                results.append(row)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        for row in results:
+            print(row)
+
+    elif 'inner join' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Assistants(ID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+        # employees.ID inner join assistants.ID
+        # Parsing the Query
+        query_parts = query.split('inner join')
+        r1 = query_parts[0].strip()  # 'employees.ID'
+        r2 = query_parts[1].strip()  # 'assistants.ID'
+
+        # Convert the params to a relation
+        rel1 = relations[r1.split('.')[0]] # employees
+        rel2 = relations[r2.split('.')[0]] # assistants
+        merge_col1 = r1.split('.')[1]
+        merge_col2 = r2.split('.')[1]
+
+        # Filtering the data based on the query
         results = []
         for row in rel1.data:
             # (1, 'John', 32), 2, 30
