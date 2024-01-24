@@ -51,9 +51,10 @@ while 1:
     query = input("""Type in a query: 
     For example:
     Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
-    Employees(ID, Name) = {(1, 'John'), (2, 'Alice'), (3, 'Bob')}
+    Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
     select age>30(employees)
     project ID, Name(employees)
+    employees intersect students
     """).lower()
 
     # Performing the Query Operation
@@ -133,6 +134,31 @@ while 1:
             results.append(newRow)
             # results.append([tuple(item[i] for i in columns)])
             # condition_check(row, column, condition, condition_value)  # (1, 'John', 32), 2, 30
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        for row in results:
+            print(row)
+
+    elif 'intersect' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+        # employees intersect students
+        # Parsing the Query
+        query_parts = query.split('intersect')
+        r1 = query_parts[0].strip() # 'employees'
+        r2 = query_parts[1].strip() # 'students'
+
+        # Convert the params to a relation
+        rel1 = relations[r1]
+        rel2 = relations[r2]
+
+        # Filtering the employees_data based on the query
+        results = []
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            if (row in rel2.data):
+                results.append(row)
 
         # Printing the result
         print(f"Result for query: {query}")
