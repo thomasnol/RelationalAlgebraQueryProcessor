@@ -34,32 +34,9 @@ class Relation:
     def __str__(self):
         return f"Relation {self.name} with columns {self.columns} and data {self.data}"
 
-
-# def select(relation, condition):
-#     filtered_data = [row for row in relation.data if condition(row)]
-#     return Relation(relation.columns, filtered_data)
-#
-#
-# def project(relation, columns):
-#     index_mapping = [relation.columns.index(col) for col in columns]
-#     projected_data = [[row[i] for i in index_mapping] for row in relation.data]
-#     projected_columns = columns
-#     return Relation(projected_columns, projected_data)
-
 while 1:
     # Example Relational Algebra Query
-    query = input("""Type in a query: 
-    For example:
-    Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
-    Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
-    Assistants(jobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
-    select age>30(employees)
-    project ID, Name(employees)
-    employees intersect students
-    students union employees
-    employees minus students
-    employees.ID inner join assistants.JobID
-    """).lower()
+    query = input("Type in a query: Use 'info' for info, 'relations' for all the relations and 'quit' to quit\n").lower().strip()
 
     # Performing the Query Operation
     def condition_check(row, column, condition, condition_value):
@@ -75,6 +52,12 @@ while 1:
         else:
             print("Unsupported condition2")
 
+    if 'relations' == query:
+        # Print all relations
+        print("All relations:")
+        for key in relations:
+            print(relations[key])
+        continue
 
     if 'select' in query:
         # Parsing the Query
@@ -82,15 +65,17 @@ while 1:
         operation = query_parts[0].strip()  # 'select age>30'
         params = query_parts[1].replace(')', '').strip()  # 'employees'
 
+        operation = operation.replace('select', '').strip() # 'age>30'
+
         # Extracting the field and condition from the operation
         if ('>' in operation):
-            field, condition_value = operation.split(" ")[1].split(">")
+            field, condition_value = operation.split(">")
             condition = '>'
         elif ('<' in operation):
-            field, condition_value = operation.split(" ")[1].split("<")
+            field, condition_value = operation.split("<")
             condition = '<'
         elif ('=' in operation):
-            field, condition_value = operation.split(" ")[1].split("=")
+            field, condition_value = operation.split("=")
             condition = '='
         else:
             print("Unsupported condition1")
@@ -116,7 +101,7 @@ while 1:
     elif 'project' in query: # project ID, Name(employees)
         # Parsing the Query
         query_parts = query.split('(')
-        operation = query_parts[0].strip()  # 'select age>30'
+        operation = query_parts[0].strip()  # 'project ID, Name'
         params = query_parts[1].replace(')', '').strip()  # 'employees'
 
         # Extracting the fields from the query
@@ -263,6 +248,177 @@ while 1:
         for row in results:
             print(row)
 
+    elif 'left outer join' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Assistants(JobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+        # employees.ID left outer join assistants.JobID
+        # Parsing the Query
+        query_parts = query.split('left outer join')
+        r1 = query_parts[0].strip()  # 'employees.ID'
+        r2 = query_parts[1].strip()  # 'assistants.JobID'
+
+        # Convert the params to a relation
+        rel1 = relations[r1.split('.')[0]] # employees
+        rel2 = relations[r2.split('.')[0]] # assistants
+        merge_col1 = r1.split('.')[1] # 'ID'
+        merge_col2 = r2.split('.')[1] # 'jobID'
+
+        # Converting the field to the column number
+        col1 = rel1.columns.index(merge_col1)
+        col2 = rel2.columns.index(merge_col2)
+
+        # Filtering the data based on the query
+        results = []
+        matching_row_found = False
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            # find the matching row in rel2
+            for row2 in rel2.data:
+                if row[col1] == row2[col2]: # if matching key column value found
+                    # create new list with all columns from both relations
+                    newRow = [row + row2]
+                    results.append(newRow)
+                    matching_row_found = True
+                    break
+            if not matching_row_found:
+                # if no matching row found in rel2
+                newRow = list(row)
+                newRow.extend([None] * len(rel2.columns))
+                results.append(newRow)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        print(rel1.columns + rel2.columns)
+        for row in results:
+            print(row)
+
+    elif 'right outer join' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Assistants(JobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+        # employees.ID right outer join assistants.JobID
+        # Parsing the Query
+        query_parts = query.split('right outer join')
+        r1 = query_parts[0].strip()  # 'employees.ID'
+        r2 = query_parts[1].strip()  # 'assistants.JobID'
+
+        # Convert the params to a relation
+        rel1 = relations[r1.split('.')[0]] # employees
+        rel2 = relations[r2.split('.')[0]] # assistants
+        merge_col1 = r1.split('.')[1] # 'ID'
+        merge_col2 = r2.split('.')[1] # 'jobID'
+
+        # Converting the field to the column number
+        col1 = rel1.columns.index(merge_col1)
+        col2 = rel2.columns.index(merge_col2)
+
+        # Filtering the data based on the query
+        results = []
+        matching_row_found = False
+        for row2 in rel2.data:
+            # (1, 'John', 32), 2, 30
+            # find the matching row in rel1
+            for row1 in rel1.data:
+                if row1[col1] == row2[col2]: # if matching key column value found
+                    # create new list with all columns from both relations
+                    newRow = [row1 + row2]
+                    results.append(newRow)
+                    matching_row_found = True
+                    break
+            if not matching_row_found:
+                # if no matching row found in rel1
+                newRow = [None] * len(rel1.columns)
+                newRow.extend(list(row2))
+                results.append(newRow)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        print(rel1.columns + rel2.columns)
+        for row in results:
+            print(row)
+
+    elif 'full outer join' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Assistants(JobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+        # employees.ID full outer join assistants.JobID
+        # Parsing the Query
+        query_parts = query.split('full outer join')
+        r1 = query_parts[0].strip()  # 'employees.ID'
+        r2 = query_parts[1].strip()  # 'assistants.JobID'
+
+        # Convert the params to a relation
+        rel1 = relations[r1.split('.')[0]]  # employees
+        rel2 = relations[r2.split('.')[0]]  # assistants
+        merge_col1 = r1.split('.')[1]  # 'ID'
+        merge_col2 = r2.split('.')[1]  # 'jobID'
+
+        # Converting the field to the column number
+        col1 = rel1.columns.index(merge_col1)
+        col2 = rel2.columns.index(merge_col2)
+
+        # Filtering the data based on the query
+        results = []
+        matching_row_found = False
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            # find the matching row in rel2
+            for row2 in rel2.data:
+                if row[col1] == row2[col2]:  # if matching key column value found
+                    # create new list with all columns from both relations
+                    newRow = [row + row2]
+                    results.append(newRow)
+                    matching_row_found = True
+                    break
+            if not matching_row_found:
+                # if no matching row found in rel2
+                newRow = list(row)
+                newRow.extend([None] * len(rel2.columns))
+                results.append(newRow)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        print(rel1.columns + rel2.columns)
+        for row in results:
+            print(row)
+
+    elif 'cproduct' in query:
+        # Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+        # Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+        # employees cproduct students
+        # Parsing the Query
+        query_parts = query.split('cproduct')
+        r1 = query_parts[0].strip() # 'employees'
+        r2 = query_parts[1].strip() # 'students'
+
+        # Convert the params to a relation
+        rel1 = relations[r1]
+        rel2 = relations[r2]
+
+        # Filtering the data based on the query
+        results = []
+        for row in rel1.data:
+            # (1, 'John', 32), 2, 30
+            for row2 in rel2.data:
+                results.append(row+row2)
+
+        # Printing the result
+        print(f"Result for query: {query}")
+        print(rel1.columns+rel2.columns)
+        for row in results:
+            print(row)
+
+    elif 'info' in query:
+        print("""Examples of queries:
+    Employees(ID, Name, Age) = {(1, 'John', 32), (2, 'Alice', 28), (3, 'Bob', 29)}
+    Students(ID, Name, Age) = {(1, 'Johny', 32), (2, 'Alice', 28), (7, 'Bob', 29)}
+    Assistants(jobID, JobType) = {(9, 'General'), (3, 'Manager'), (2, 'Supervisor')}
+    select age>30(employees)
+    project ID, Name(employees)
+    employees intersect students
+    students union employees
+    employees minus students
+    employees.ID inner join assistants.JobID
+    employees cproduct students""")
+
     elif 'quit' in query:
         break
 
@@ -272,5 +428,4 @@ while 1:
         relations[newRelation.name] = newRelation
 
         # Applying the query and printing the result
-        print(f"Result for query: {query}")
-        # print(employees)
+        print("Relation successfully added")
