@@ -355,6 +355,9 @@ while 1:
         col1 = rel1.columns.index(merge_col1)
         col2 = rel2.columns.index(merge_col2)
 
+        # keep track of which rows have not been matched yet within rel2
+        remaining_rows = list(rel2.data)
+
         # Filtering the data based on the query
         results = []
         matching_row_found = False
@@ -363,6 +366,8 @@ while 1:
             # find the matching row in rel2
             for row2 in rel2.data:
                 if row[col1] == row2[col2]:  # if matching key column value found
+                    if row2 in remaining_rows:
+                        remaining_rows.remove(row2)
                     # create new list with all columns from both relations
                     newRow = [row + row2]
                     results.append(newRow)
@@ -373,7 +378,11 @@ while 1:
                 newRow = list(row)
                 newRow.extend([None] * len(rel2.columns))
                 results.append(newRow)
-
+        # add remaining rows from rel2 that were not matched
+        for row2 in remaining_rows:
+            newRow = [None] * len(rel1.columns)
+            newRow.extend(list(row2))
+            results.append(newRow)
         # Printing the result
         print(f"Result for query: {query}")
         print(rel1.columns + rel2.columns)
@@ -416,8 +425,11 @@ while 1:
     employees intersect students
     students union employees
     employees minus students
+    employees cproduct students
     employees.ID inner join assistants.JobID
-    employees cproduct students""")
+    employees.ID left outer join assistants.JobID
+    employees.ID right outer join assistants.JobID
+    employees.ID full outer join assistants.JobID""")
 
     elif 'quit' in query:
         break
